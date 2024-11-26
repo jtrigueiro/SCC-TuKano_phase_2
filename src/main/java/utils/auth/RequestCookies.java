@@ -1,4 +1,4 @@
-package scc.srv.auth;
+package utils.auth;
 
 import java.util.Map;
 

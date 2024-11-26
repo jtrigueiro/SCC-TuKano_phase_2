@@ -10,7 +10,10 @@ import tukano.impl.Token;
 import tukano.impl.svr.ControlResource;
 import utils.Args;*/
 import utils.IP;
-
+import utils.auth.Authentication;
+import utils.auth.ControlResource;
+import utils.auth.RequestCookiesCleanupFilter;
+import utils.auth.RequestCookiesFilter;
 import jakarta.ws.rs.core.Application;
 import tukano.impl.Token;
 
@@ -38,6 +41,11 @@ public class TukanoRestServer extends Application {
 		resources.add(RestBlobsResource.class);
 		resources.add(RestUsersResource.class);
 		resources.add(RestShortsResource.class);
+		resources.add(ControlResource.class);
+		resources.add(RequestCookiesFilter.class);
+     	resources.add(RequestCookiesCleanupFilter.class);
+        resources.add(Authentication.class);
+        
 		singletons.add(new RestBlobsResource());
 		singletons.add(new RestShortsResource());
 		singletons.add(new RestUsersResource());

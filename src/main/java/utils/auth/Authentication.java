@@ -1,4 +1,4 @@
-package utils;
+package utils.auth;
 
 import java.net.URI;
 import java.util.UUID;

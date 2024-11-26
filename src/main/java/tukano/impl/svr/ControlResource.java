@@ -8,7 +8,7 @@ import jakarta.ws.rs.core.MediaType;
 /**
  * Class with control endpoints.
  */
-@Path("/ctrl")
+@Path("/ctrl1")
 public class ControlResource
 {
 

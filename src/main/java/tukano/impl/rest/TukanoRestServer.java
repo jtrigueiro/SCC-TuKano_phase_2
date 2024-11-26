@@ -43,9 +43,9 @@ public class TukanoRestServer extends Application {
 		resources.add(RestShortsResource.class);
 		resources.add(ControlResource.class);
 		resources.add(RequestCookiesFilter.class);
-     	resources.add(RequestCookiesCleanupFilter.class);
-        resources.add(Authentication.class);
-        
+		resources.add(RequestCookiesCleanupFilter.class);
+		resources.add(Authentication.class);
+
 		singletons.add(new RestBlobsResource());
 		singletons.add(new RestShortsResource());
 		singletons.add(new RestUsersResource());

@@ -41,7 +41,7 @@ public class CosmosDBLayer {
 
 		CosmosClient client = new CosmosClientBuilder()
 				.endpoint("https://cosmos5811956837.documents.azure.com:443/")
-				.key("5NIrxTXP2QOAEYIEFKMQUshBBBM17VVGTtp5FJfnk9CiNOZmlA09ULHt56LHmAc4wztlSWfT3KReACDbl5iOhA==")
+				.key("ZpZO5j8dwCFay8i8begaQqWoLdmwOcUZ8gulWLTqdPOtRWReInPrPzWBEhYYvIbeog1qVB9kWRmCACDbVQEEEQ==")
 				// .directMode()
 				.gatewayMode() // replace by .directMode() for better performance
 				.consistencyLevel(ConsistencyLevel.SESSION)

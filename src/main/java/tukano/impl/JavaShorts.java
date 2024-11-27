@@ -64,7 +64,7 @@ public class JavaShorts implements Shorts {
 		if (shortId == null)
 			return error(BAD_REQUEST);
 
-		if(AzureProperties.USE_REDIS) {
+		if (AzureProperties.USE_REDIS) {
 			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
 				var cached = jedis.get(Shorts.NAME + ':' + shortId);
 
@@ -102,7 +102,7 @@ public class JavaShorts implements Shorts {
 				if (AzureProperties.USE_REDIS) {
 					try (Jedis jedis = RedisCache.getCachePool().getResource()) {
 						jedis.del(Shorts.NAME + ':' + shortId);
-					}	
+					}
 				}
 
 				dbshorts.deleteOne(shrt);
@@ -224,7 +224,7 @@ public class JavaShorts implements Shorts {
 				shorts.forEach(shrt -> jedis.del(Shorts.NAME + ':' + shrt.getId()));
 			}
 		}
-		
+
 		dbshorts.deleteMany(query1, Short.class);
 
 		// delete follows

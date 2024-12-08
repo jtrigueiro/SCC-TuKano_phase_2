@@ -1,0 +1,231 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tukano
+spec:
+  serviceName: tukano
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tukano
+  template:
+    metadata:
+      labels:
+        app: tukano
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: tukano
+        image: dblemos/tukano:latest
+        ports:
+        - containerPort: 5672
+          name: tukano-amqp
+        - containerPort: 15672
+          name: tukano-http
+        env:
+        - name: TUKANO_DEFAULT_USER
+          value: "username"
+        - name: TUKANO_DEFAULT_PASS
+          value: "password"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tukano-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tukano-service
+  template:
+    metadata:
+      labels:
+        app: tukano-service
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: tukano-service
+        image: dblemos/tukano:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: TUKANO_QUEUE_HOSTNAME
+          value: "tukano"
+        - name: TUKANO_QUEUE_PORT
+          value: "5672"
+        - name: TUKANO_QUEUE_USERNAME
+          value: "username"
+        - name: TUKANO_QUEUE_PASSWORD
+          value: "password"
+        - name: TUKANO_QUEUE_NAME
+          value: "tukano"
+        - name: FASTIFY_ADDRESS
+          value: "0.0.0.0"
+        resources:
+          requests:
+            cpu: 1m
+            memory: 50Mi
+          limits:
+            cpu: 75m
+            memory: 128Mi
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          failureThreshold: 5
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          failureThreshold: 3
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          failureThreshold: 5
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        volumeMounts:
+          - name: blobs-volume
+            mountPath: /app/blobs
+      initContainers:
+      - name: wait-for-tukanoservice
+        image: busybox
+        command: ['sh', '-c', 'until nc -zv tukano 5672; do echo waiting for tukano; sleep 2; done;']
+        resources:
+          requests:
+            cpu: 1m
+            memory: 50Mi
+          limits:
+            cpu: 75m
+            memory: 128Mi
+       volumes:
+        - name: blobs-volume
+          persistentVolumeClaim:
+            claimName: blobs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tukano-service
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+  selector:
+    app: tukano-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: blobs
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: blobs
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-service
+  template:
+    metadata:
+      labels:
+        app: mongo-service
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: mongo-service
+        image: mongo:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DB_QUEUE_HOSTNAME
+          value: "mongodb"
+        - name: DB_QUEUE_PORT
+          value: "5672"
+        - name: DB_QUEUE_USERNAME
+          value: "username"
+        - name: DB_QUEUE_PASSWORD
+          value: "password"
+        - name: DB_QUEUE_NAME
+          value: "orders"
+        - name: FASTIFY_ADDRESS
+          value: "0.0.0.0"
+        resources:
+          requests:
+            cpu: 1m
+            memory: 50Mi
+          limits:
+            cpu: 75m
+            memory: 128Mi
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          failureThreshold: 5
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          failureThreshold: 3
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          failureThreshold: 5
+          initialDelaySeconds: 3
+          periodSeconds: 3
+      initContainers:
+      - name: wait-for-mongodb
+        image: busybox
+        command: ['sh', '-c', 'until nc -zv mongodb 5672; do echo waiting for mongodb; sleep 2; done;']
+        resources:
+          requests:
+            cpu: 1m
+            memory: 50Mi
+          limits:
+            cpu: 75m
+            memory: 128Mi    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+  selector:
+    app: mongo-service
+---

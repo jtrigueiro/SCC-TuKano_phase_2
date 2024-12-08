@@ -145,27 +145,27 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mongo-service
+  name: db-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mongo-service
+      app: db-service
   template:
     metadata:
       labels:
-        app: mongo-service
+        app: db-service
     spec:
       nodeSelector:
         "kubernetes.io/os": linux
       containers:
-      - name: mongo-service
-        image: mongo:latest
+      - name: db-service
+        image: postgres:latest
         ports:
         - containerPort: 3000
         env:
         - name: DB_QUEUE_HOSTNAME
-          value: "mongodb"
+          value: "db-service"
         - name: DB_QUEUE_PORT
           value: "5672"
         - name: DB_QUEUE_USERNAME
@@ -207,7 +207,7 @@ spec:
       initContainers:
       - name: wait-for-mongodb
         image: busybox
-        command: ['sh', '-c', 'until nc -zv mongodb 5672; do echo waiting for mongodb; sleep 2; done;']
+        command: ['sh', '-c', 'until nc -zv db-service 5672; do echo waiting for db-service; sleep 2; done;']
         resources:
           requests:
             cpu: 1m
@@ -219,7 +219,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongo-service
+  name: db-service
 spec:
   type: ClusterIP
   ports:
@@ -227,5 +227,5 @@ spec:
     port: 3000
     targetPort: 3000
   selector:
-    app: mongo-service
+    app: db-service
 ---

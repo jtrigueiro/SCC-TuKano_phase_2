@@ -15,10 +15,7 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 
 import tukano.api.Result;
-import tukano.api.Result.ErrorCode;
 import tukano.impl.JavaShorts;
-import utils.AzureKeys;
-import utils.AzureProperties;
 
 import static java.lang.String.format;
 import static tukano.api.Result.ErrorCode;

@@ -17,8 +17,8 @@ import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
 import tukano.impl.cache.RedisCache;
-import tukano.impl.storage.CosmosDBLayer;
 import utils.AzureProperties;
+import utils.DB;
 import utils.JSON;
 
 public class JavaUsers implements Users {
@@ -43,7 +43,7 @@ public class JavaUsers implements Users {
 		if (badUserInfo(user))
 			return error(BAD_REQUEST);
 
-		var result = errorOrValue(CosmosDBLayer.getInstance(Users.NAME).insertOne(user),
+		var result = errorOrValue(DB.insertOne(user),
 				user.getId());
 
 		if (AzureProperties.USE_REDIS && result.isOK())
@@ -68,7 +68,7 @@ public class JavaUsers implements Users {
 			}
 		}
 		
-		var result = validatedUserOrError(CosmosDBLayer.getInstance(Users.NAME).getOne(userId, User.class), pwd);
+		var result = validatedUserOrError(DB.getOne(userId, User.class), pwd);
 
 		if (AzureProperties.USE_REDIS && result.isOK()) {
 			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
@@ -86,7 +86,6 @@ public class JavaUsers implements Users {
 		if (badUpdateUserInfo(userId, pwd, other))
 			return error(BAD_REQUEST);
 
-		CosmosDBLayer db = CosmosDBLayer.getInstance(Users.NAME);
 		Result<User> rUser = null;
 
 		if(AzureProperties.USE_REDIS) {
@@ -99,13 +98,13 @@ public class JavaUsers implements Users {
 		}
 			
 		if(rUser == null)
-			rUser = db.getOne(userId, User.class);
+			rUser = DB.getOne(userId, User.class);
 
 		if (validatedUserOrError(rUser, pwd).isOK()) {
 			User user = rUser.value().updateFrom(other);
 
-			if (db.updateOne(user.updateFrom(user)).isOK()) {
-				rUser = db.getOne(userId, User.class);
+			if (DB.updateOne(user.updateFrom(user)).isOK()) {
+				rUser = DB.getOne(userId, User.class);
 
 				if (rUser.isOK() && AzureProperties.USE_REDIS) {
 					try (Jedis jedis = RedisCache.getCachePool().getResource()) {
@@ -137,7 +136,7 @@ public class JavaUsers implements Users {
 		}
 
 		if(rUser == null)
-			rUser = CosmosDBLayer.getInstance(Users.NAME).getOne(userId, User.class);
+			rUser = DB.getOne(userId, User.class);
 		
 		return errorOrResult(validatedUserOrError(rUser, pwd), user -> {
 
@@ -147,7 +146,7 @@ public class JavaUsers implements Users {
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 			}).start();
 
-			CosmosDBLayer.getInstance(Users.NAME).deleteOne(user);
+			DB.deleteOne(user);
 
 			if (AzureProperties.USE_REDIS) {
 				try (Jedis jedis = RedisCache.getCachePool().getResource()) {
@@ -164,7 +163,7 @@ public class JavaUsers implements Users {
 		Log.info(() -> format("searchUsers : patterns = %s\n", pattern));
 
 		var query = format("SELECT * FROM User u WHERE UPPER(u.id) LIKE '%%%s%%'", pattern.toUpperCase());
-		var hits = CosmosDBLayer.getInstance(Users.NAME).query(query, User.class).value()
+		var hits = DB.sql(query, User.class)
 				.stream()
 				.map(User::copyWithoutPassword)
 				.toList();
